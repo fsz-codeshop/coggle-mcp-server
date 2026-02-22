@@ -8,6 +8,10 @@ compatibility_flags = ["nodejs_compat"]
 command = "npm run build"
 watch_dir = ["src"]
 
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CoggleMCP"]
+
 [vars]
 MCP_SERVER_NAME = "coggle-mcp-server"
 
@@ -16,7 +20,12 @@ enabled = true
 
 [env.production]
 name = "coggle-mcp-server"
-vars = { MCP_SERVER_NAME = "coggle-mcp-server" }
+
+[env.production.durable_objects]
+bindings = [{ name = "MCP_OBJECT", class_name = "CoggleMCP" }]
+
+[env.production.vars]
+MCP_SERVER_NAME = "coggle-mcp-server"
 
 # Secrets to set per environment (via CLI, not in this file):
 # - COGGLE_API_TOKEN

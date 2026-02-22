@@ -1,67 +1,74 @@
 #!/usr/bin/env tsx
 
-import { execSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 // Professional deployment tracking
-const packageJson = JSON.parse(readFileSync('package.json', 'utf8'))
-let gitHash = 'unknown'
+const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
+let gitHash = "unknown";
 try {
-    gitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim()
+	gitHash = execSync("git rev-parse --short HEAD", {
+		encoding: "utf8",
+		stdio: "pipe",
+	}).trim();
 } catch (e) {
-    // ignore
+	// ignore
 }
-const timestamp = new Date().toISOString()
+const timestamp = new Date().toISOString();
 
 // Determine deployment environment (default to development)
-const deployEnv = process.argv[2] || process.env.DEPLOY_ENV || 'development'
+const deployEnv = process.argv[2] || process.env.DEPLOY_ENV || "development";
 
 // Build version with metadata for traceability (not displayed prominently)
-const buildVersion = `${packageJson.version}+${gitHash}`
+const buildVersion = `${packageJson.version}+${gitHash}`;
 
-console.log('Deploying MCP Server...')
-console.log(`Environment: ${deployEnv}`)
-console.log(`Version: ${buildVersion}`)
-console.log(`Build: ${timestamp}`)
-console.log('')
+console.log("Deploying MCP Server...");
+console.log(`Environment: ${deployEnv}`);
+console.log(`Version: ${buildVersion}`);
+console.log(`Build: ${timestamp}`);
+console.log("");
 
 // Determine wrangler environment
 const wranglerEnv =
-    deployEnv === 'production' ? 'production' : deployEnv === 'staging' ? 'staging' : 'development'
+	deployEnv === "production"
+		? "production"
+		: deployEnv === "staging"
+			? "staging"
+			: "development";
 const endpoint =
-    deployEnv === 'production'
-        ? `https://${packageJson.name}.your-account.workers.dev`
-        : deployEnv === 'staging'
-            ? `https://${packageJson.name}-staging.your-account.workers.dev`
-            : `https://${packageJson.name}-dev.your-account.workers.dev`
+	deployEnv === "production"
+		? `https://${packageJson.name}.your-account.workers.dev`
+		: deployEnv === "staging"
+			? `https://${packageJson.name}-staging.your-account.workers.dev`
+			: `https://${packageJson.name}-dev.your-account.workers.dev`;
 
 // Deploy with stable server name from wrangler.toml
 try {
-    const _result = execSync(`npx wrangler deploy --env=${wranglerEnv}`, {
-        encoding: 'utf8',
-        stdio: 'inherit',
-    })
+	const _result = execSync(`npx wrangler deploy --env=${wranglerEnv}`, {
+		encoding: "utf8",
+		stdio: "inherit",
+	});
 
-    console.log('')
-    console.log('Deployment successful!')
-    console.log(`Endpoint: ${endpoint}`)
+	console.log("");
+	console.log("Deployment successful!");
+	console.log(`Endpoint: ${endpoint}`);
 
-    // Show stable server name based on environment
-    const stableServerName =
-        deployEnv === 'production'
-            ? packageJson.name
-            : deployEnv === 'staging'
-                ? `${packageJson.name}-staging`
-                : `${packageJson.name}-dev`
-    console.log(`MCP Server Name: ${stableServerName}`)
-    console.log('')
-    console.log('Use this stable name in Claude:')
-    console.log(`   ${stableServerName}`)
-    console.log('')
-    console.log('Build tracking:')
-    console.log(`   Version: ${buildVersion}`)
-    console.log(`   Deployed: ${timestamp}`)
+	// Show stable server name based on environment
+	const stableServerName =
+		deployEnv === "production"
+			? packageJson.name
+			: deployEnv === "staging"
+				? `${packageJson.name}-staging`
+				: `${packageJson.name}-dev`;
+	console.log(`MCP Server Name: ${stableServerName}`);
+	console.log("");
+	console.log("Use this stable name in Claude:");
+	console.log(`   ${stableServerName}`);
+	console.log("");
+	console.log("Build tracking:");
+	console.log(`   Version: ${buildVersion}`);
+	console.log(`   Deployed: ${timestamp}`);
 } catch (error: any) {
-    console.error('Deployment failed:', error.message)
-    process.exit(1)
+	console.error("Deployment failed:", error.message);
+	process.exit(1);
 }
